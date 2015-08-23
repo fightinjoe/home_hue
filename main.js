@@ -1,3 +1,5 @@
+var CONFIG = require('./config.js');
+
 /*== Hue Light setup ==*/
 
 /*
@@ -16,7 +18,7 @@ var hue = require("node-hue-api"),
 var hue_config = {
 	host : null,
 	// TODO: remove hardcoding and support registering of a new user, ooh! and maybe a config file
-	userid : '48416b21c6cc5712c038ce2532083',
+	userid : CONFIG.Hue.userId,
 	group : 1
 }
 
@@ -37,10 +39,103 @@ hue.nupnpSearch().then(function(bridge_json){
 }).done();
 
 
+/*== Serial port setup ==*/
+
+// https://github.com/spark/local-communication-example/blob/master/simple_server.js
+
+var os          = require('os');
+var net         = require('net');
+var https       = require('https');
+var querystring = require('querystring');
+
+var TCP = {
+	port : CONFIG.TCP.port,
+	ip   : null
+}
+
+var save_first_ipv4 = function (iface) {
+  if (!TCP.ip && !iface.internal && 'IPv4' === iface.family) {
+    TCP.ip = iface.address;
+  }
+};
+
+var interfaces = os.networkInterfaces();
+for (var ifName in interfaces) {
+  if (!TCP.ip) {
+    interfaces[ifName].forEach(save_first_ipv4);
+  }
+}
+
+console.log("OK I'm listening on port " + TCP.port + " here at IP address " + TCP.ip + "!");
+// console.log("Now run the following curl command in another window,");
+// console.log("replacing <DEVICE_ID> and <ACCESS_TOKEN>.");
+// console.log("curl https://api.spark.io/v1/devices/<DEVICE_ID>/connect -d access_token=<ACCESS_TOKEN> -d ip=" + TCP.ip);
 
 
 
+var https_data = querystring.stringify({
+	access_token: CONFIG.Particle.accessToken,
+	ip: TCP.ip
+});
 
+var https_options = {
+	host: 'api.spark.io',
+	port: 443,
+	method: 'POST',
+	headers: {
+		'Content-Type': 'application/x-www-form-urlencoded',
+		'Content-Length': https_data.length
+	},
+	path: null
+};
+
+var announceIp = function() {
+	// announce to the Particle boards what my IP is
+	var devices = CONFIG.Particle.device_ids;
+
+	for( var i=0; i<devices.length; i++ ) {
+		https_options.path = '/v1/devices/'+devices[i]+'/connect';
+		console.log( https_options.path );
+
+		var request = https.request(https_options, function(response){
+			response.on('data', function (body) {
+			    console.log('Body: ' + body);
+			});
+		}).on('error', function(e) {
+			console.log('problem with request: ' + e.message);
+		});
+
+		console.log( https_data );
+		request.write( https_data );
+		request.end()
+	}
+}
+
+var server = net.createServer(function(socket){
+  console.log("Someone connected from " + socket.remoteAddress + ":" + socket.remotePort + "!");
+
+  process.stdout.write('>> ');
+
+  process.stdin.on('data', function(d) {
+    d = d.toString('utf8', 0, d.length - 1);
+    if (/^[0-7][lh]$/i.test(d)) {
+      socket.write(d.toLowerCase());
+    } else if ('x' === d) {
+      process.exit(0);
+    } else {
+      console.log("Commands: 0h  Set pin D0 high");
+      console.log("          7l  Set pin D7 low");
+      console.log("              Any pin 0-7 may be set high or low");
+      console.log("          x   Exit");
+    }
+    process.stdout.write('>> ');
+  });
+
+});
+
+server.listen( TCP.port );
+
+announceIp();
 
 /*== Web server setup ==*/
 var express = require('express');
