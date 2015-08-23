@@ -1,0 +1,14 @@
+{
+  "name": "hue",
+  "version": "0.0.1",
+  "description": "Simple server for managing the lights in my apartment",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Aaron Wheeler",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.13.3"
+  }
+}
