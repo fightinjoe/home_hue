@@ -28,6 +28,24 @@ var H = {
 	states : {
 		on : lightState.create().on().bri(100),
 		off : lightState.create().off()
+	},
+	commands : {
+		on : function() {
+			console.log('turning on lights');
+			H.api
+				.setGroupLightState( hue_config.group, H.states.on )
+				.then(console.log)
+				.fail(function(e){console.log('fail',e)})
+				.done();
+		},
+		off : function() {
+			console.log('turning off lights');
+			H.api
+				.setGroupLightState( hue_config.group, H.states.off)
+				.then(console.log)
+				.fail(function(e){console.log('fail',e)})
+				.done();
+		}
 	}
 }
 
@@ -115,7 +133,19 @@ var server = net.createServer(function(socket){
   console.log("Someone connected from " + socket.remoteAddress + ":" + socket.remotePort + "!");
 
   socket.on('data', function(data) {
-  	console.log(data.toString());
+  	data = data.toString();
+
+  	if(data.match(/\r\n/)) {
+  		data = data.replace(/\r\n/,'');
+
+  		switch(data) {
+  			case 'D0' : H.commands.on(); break;
+  			case 'D1' : H.commands.off(); break;
+  			default : console.log("Didn't understand command: ", data);
+  		}
+  	} else {
+  		console.log("Data doesn't match: ", data);
+  	}
   })
 
   // process.stdout.write('>> ');
@@ -151,12 +181,12 @@ app.get('/', function (req, res) {
 
 
 app.get('/api/on', function (req, res) {
-  H.api.setGroupLightState( hue_config.group, H.states.on).then(console.log).fail(function(e){console.log('fail',e)}).done();
+  H.commands.on();
   res.send('All lights on (<a href="/api/off">turn off</a>)');
 });
 
 app.get('/api/off', function (req, res) {
-	H.api.setGroupLightState( hue_config.group, H.states.off).then(console.log).fail(function(e){console.log('fail',e)}).done();
+	H.commands.off();
 	res.send('All lights off (<a href="/api/on">turn on</a>)');
 });
 
