@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Home Hue</title>
+	<script type="text/javascript" src="/vendor/angular/angular.js"></script>
+	<script type="text/javascript" src="/js/app.js"></script>
+</head>
+
+<body ng-app="HomeHubApp">
+
+<!-- Templates -->
+
+<div ng-controller="HomeHueCtrl">
+
+<script type="text/ng-template" id="scene.html">
+	<span ng-click="setScene( scene.id )">
+		{{ scene.name }}
+	</span>
+</script>
+
+<h1>Home Hue</h1>
+
+	<!-- <div ng-repeat="scene in scenes" ng-include="scene.html"> -->
+	<div ng-repeat="scene in scenes">
+		<span ng-click="setScene( scene.id )">
+			{{ scene.name }}
+		</span>
+
+	</div>
+</div>
+
+</body>
+</html>

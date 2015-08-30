@@ -9,6 +9,7 @@
   "author": "Aaron Wheeler",
   "license": "ISC",
   "dependencies": {
+    "bower": "^1.5.2",
     "express": "^4.13.3",
     "node-hue-api": "^1.1.1"
   }
