@@ -25,6 +25,15 @@ HomeHueApp.controller('HomeHueCtrl', function ($scope, $http) {
 		$http.get("/api/scenes/"+id);
 	}
 
+	$scope.setDefault = function( key, sceneId ) {
+		$http.get("/api/setDefault", {
+			params: {
+				key : key,
+				sceneId : sceneId
+			}
+		})
+	}
+
 	$scope.announceIP = function() { $http.get('/api/announce').success(say('Announced IP')); }
 
 	getScenes();

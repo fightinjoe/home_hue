@@ -41,14 +41,22 @@ var initTCP = function( localConfig ) {
 			data = data.toString();
 
 			if(data.match(/\r\n/)) {
-				data = data.replace(/\r\n/,'').split(',');
+				data = data.replace(/\r\n/,''); //.split(',');
 
-				var button = commands[ data[0] ];
-				var fn = button && button[ data[1] ];
-				if( fn ) {
-					fn();
+				var sceneId = CONFIG.get(data);
+				if( sceneId ) {
+					H.api.activateScene( sceneId )
+						.then( console.log('Activated scene ', sceneId) )
+						.done();
 				} else {
-					console.log("Could not find ", data);
+					data = data.split(',');
+					var button = commands[ data[0] ];
+					var fn = button && button[ data[1] ];
+					if( fn ) {
+						fn();
+					} else {
+						console.log("Could not find ", data);
+					}
 				}
 			} else {
 				console.log("Data doesn't match: ", data);
@@ -136,6 +144,13 @@ app.use(express.static('public'));
 app.get('/', function (req, res) {
 	res.send('Hello World!');
 });
+
+app.get('/api/setDefault', function (req, res) {
+	var key     = req.query.key;
+	var sceneId = req.query.sceneId;
+
+	CONFIG.set(key, sceneId);
+})
 
 app.get('/api/announce', function (req, res) {
 	announceIp();
