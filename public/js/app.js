@@ -16,6 +16,8 @@ HomeHueApp.controller('HomeHueCtrl', function ($scope, $http) {
 	}
 
 	$scope.setScene = function ( id ) {
+		if( id == 'off' ) return $http.get('/api/off');
+
 		$http.get("/api/scenes/"+id);
 	}
 

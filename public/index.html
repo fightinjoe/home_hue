@@ -20,6 +20,11 @@
 
 <h1>Home Hue</h1>
 
+	<span ng-click="setScene( 'off' )">
+		All off
+	</span>
+	
+
 	<!-- <div ng-repeat="scene in scenes" ng-include="scene.html"> -->
 	<div ng-repeat="scene in scenes">
 		<span ng-click="setScene( scene.id )">
