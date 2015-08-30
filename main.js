@@ -129,6 +129,9 @@ app.get('/api/off', function (req, res) {
 	res.send('All lights off (<a href="/api/on">turn on</a>)');
 });
 
+// Callback for passing an async JSON response back to the
+// requester.  Optionally include a callback_name if you'd like
+// the response wrapped in a function name for JSONp calls.
 var delayedResponse = function( req, res, callback_name ) {
 	return function( data ) {
 		req;
@@ -146,9 +149,22 @@ var delayedResponse = function( req, res, callback_name ) {
 
 // Get the list of different groups of lights to control
 app.get('/api/groups', function (req, res) {
-	H.api.groups().then( delayedResponse(req, res, req.query.callback) ).done();
+	var cb = delayedResponse(req, res, req.query.callback)
+	H.api.groups().then( cb ).done();
 });
 
+// Get the list of different scenes to switch to
+app.get('/api/scenes', function (req, res) {
+	var cb = delayedResponse(req, res, req.query.callback);
+	H.api.getScenes().then( cb ).done();
+});
+
+app.get('/api/scenes/:id', function (req, res) {
+	H.api
+		.activateScene( req.params.id )
+		.then( delayedResponse(req, res, req.query.callback) )
+		.done();
+})
 
 
 var server = app.listen(3000, function () {
