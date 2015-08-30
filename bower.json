@@ -1,0 +1,27 @@
+{
+  "name": "Home Hue",
+  "version": "0.0.1",
+  "homepage": "https://github.com/fightinjoe/home_hue",
+  "authors": [
+    "Aaron Wheeler <fightinjoe@gmail.com>"
+  ],
+  "description": "Simple server for managing the lights in my apartment",
+  "main": "main.js",
+  "keywords": [
+    "Hue",
+    "Photon",
+    "Particle"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "public/vendor",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "1.4.4"
+  }
+}
