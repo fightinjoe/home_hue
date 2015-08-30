@@ -46,6 +46,7 @@ var https_options = {
 	path: null
 };
 
+// Broadcasts the local IP of the Node server to connected Photon boards
 var announceIp = function() {
 	// announce to the Particle boards what my IP is
 	var devices = CONFIG.Particle.device_ids;
@@ -119,6 +120,11 @@ app.use(express.static('public'));
 app.get('/', function (req, res) {
   res.send('Hello World!');
 });
+
+app.get('/api/announce', function (req, res) {
+	announceIp();
+	res.send('API announced');
+})
 
 app.get('/api/on', function (req, res) {
   H.commands.on();

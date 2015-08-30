@@ -3,6 +3,10 @@ var HomeHueApp = angular.module('HomeHubApp', []);
 HomeHueApp.controller('HomeHueCtrl', function ($scope, $http) {
 	$scope.scenes = [{id:1,name:'test'}];
 
+	var say = function(message) {
+		return function(){console.log(message)};
+	}
+
 	function getScenes() {
 		var resp = $http
 			.get("/api/scenes")
@@ -20,6 +24,8 @@ HomeHueApp.controller('HomeHueCtrl', function ($scope, $http) {
 
 		$http.get("/api/scenes/"+id);
 	}
+
+	$scope.announceIP = function() { $http.get('/api/announce').success(say('Announced IP')); }
 
 	getScenes();
 });
