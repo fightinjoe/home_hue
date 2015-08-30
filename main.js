@@ -1,61 +1,5 @@
 var CONFIG = require('./config.js');
-
-/*== Hue Light setup ==*/
-
-/*
-
-Assumptions:
-
-- the first group of lights contains all of the lights
-- the userId is fixed
-- the Hue bridge can be found with nupnpSearch()
-
-*/
-
-var hue = require("node-hue-api"),
-    lightState = hue.lightState;
-
-var hue_config = {
-	host : null,
-	// TODO: remove hardcoding and support registering of a new user, ooh! and maybe a config file
-	userid : CONFIG.Hue.userId,
-	group : 1
-}
-
-// Create an object to talk to the Hue lights
-var H = {
-	api : null,
-	states : {
-		on : lightState.create().on().bri(100),
-		off : lightState.create().off()
-	},
-	commands : {
-		on : function() {
-			console.log('turning on lights');
-			H.api
-				.setGroupLightState( hue_config.group, H.states.on )
-				.then(console.log)
-				.fail(function(e){console.log('fail',e)})
-				.done();
-		},
-		off : function() {
-			console.log('turning off lights');
-			H.api
-				.setGroupLightState( hue_config.group, H.states.off)
-				.then(console.log)
-				.fail(function(e){console.log('fail',e)})
-				.done();
-		}
-	}
-}
-
-// find the Bridge's IP address
-hue.nupnpSearch().then(function(bridge_json){
-	hue_config.host = bridge_json[0].ipaddress;
-
-	H.api = hue.HueApi(hue_config.host, hue_config.userid)
-}).done();
-
+var H      = require('./lib/hue.js');
 
 /*== Serial port setup ==*/
 
@@ -85,11 +29,6 @@ for (var ifName in interfaces) {
 }
 
 console.log("OK I'm listening on port " + TCP.port + " here at IP address " + TCP.ip + "!");
-// console.log("Now run the following curl command in another window,");
-// console.log("replacing <DEVICE_ID> and <ACCESS_TOKEN>.");
-// console.log("curl https://api.spark.io/v1/devices/<DEVICE_ID>/connect -d access_token=<ACCESS_TOKEN> -d ip=" + TCP.ip);
-
-
 
 var https_data = querystring.stringify({
 	access_token: CONFIG.Particle.accessToken,
@@ -189,6 +128,27 @@ app.get('/api/off', function (req, res) {
 	H.commands.off();
 	res.send('All lights off (<a href="/api/on">turn on</a>)');
 });
+
+var delayedResponse = function( req, res, callback_name ) {
+	return function( data ) {
+		req;
+
+		json = JSON.stringify(data);
+
+		// Wrap for JSONp requests, if you're into that
+		if( callback_name ) {
+			json = callback_name + "(" + json + ")";
+		}
+
+		res.send( json );
+	}
+}
+
+// Get the list of different groups of lights to control
+app.get('/api/groups', function (req, res) {
+	H.api.groups().then( delayedResponse(req, res, req.query.callback) ).done();
+});
+
 
 
 var server = app.listen(3000, function () {
