@@ -69,6 +69,22 @@ var announceIp = function() {
 	}
 }
 
+var commands = {
+	'D0' : {
+		'short' : H.commands.on,
+		'long'  : H.commands.on
+	},
+	'D1' : {
+		'short' : H.commands.off,
+		'long'  : function() {
+			H.api
+				.activateScene( "0c3722f49-on-0" )
+				.then(function(){console.log('activated 0c3722f49-on-0')})
+				.done()
+		}
+	}
+}
+
 var server = net.createServer(function(socket){
   console.log("Someone connected from " + socket.remoteAddress + ":" + socket.remotePort + "!");
 
@@ -76,12 +92,14 @@ var server = net.createServer(function(socket){
   	data = data.toString();
 
   	if(data.match(/\r\n/)) {
-  		data = data.replace(/\r\n/,'');
+  		data = data.replace(/\r\n/,'').split(',');
 
-  		switch(data) {
-  			case 'D0' : H.commands.on(); break;
-  			case 'D1' : H.commands.off(); break;
-  			default : console.log("Didn't understand command: ", data);
+  		var button = commands[ data[0] ];
+  		var fn = button && button[ data[1] ];
+  		if( fn ) {
+  			fn();
+  		} else {
+  			console.log("Could not find ", data);
   		}
   	} else {
   		console.log("Data doesn't match: ", data);

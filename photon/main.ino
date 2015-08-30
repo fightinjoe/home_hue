@@ -1,6 +1,7 @@
 // https://github.com/spark/local-communication-example
 
 TCPClient client;
+bool sentFirstMessage = FALSE;
 
 void ipArrayFromString(byte ipArray[], String ipString) {
   int dot1 = ipString.indexOf('.');
@@ -99,21 +100,74 @@ void setup() {
     pinMode( D1, INPUT );
 
     digitalWrite(D7, LOW);
+    // if( 0 == NULL ) { digitalWrite(D7,HIGH); } => TRUE
+    // if( 0 != NULL ) { digitalWrite(D7,HIGH); } => FALSE
+    // if( 0 == D0 ) { digitalWrite(D7,HIGH); } => TRUE
+    // if( !0 ) { digitalWrite(D7,HIGH); } => TRUE
 }
 
-bool sentFirstMessage = FALSE;
+int lastButtonPressed;
+unsigned long startPress = 0;
+unsigned long currentPress = 0;
+unsigned long longPressDuration = 1000;  // long press lasts for 1 second
+bool triggered = FALSE;  // prevents a long button press from being triggered twice
+
+void onButtonPress( int button ) {
+  // Increment the button.  Checking for D0 causes problems since D0 evaluates
+  // to FALSE within IF statemtns
+  button = button + 1;
+
+  if( !lastButtonPressed ) { lastButtonPressed = button; }
+
+  // is a button currently pressed?
+  if( button != lastButtonPressed ) { onButtonRelease(); }
+
+  currentPress = millis();
+
+  if( startPress == 0 ) {
+    // if this is the first registered press of this button
+    // then cache the time when the button was pressed
+    startPress = currentPress;
+    digitalWrite(D7, HIGH);
+  } else if( currentPress - startPress > longPressDuration ) {
+    // if this button is being held down for longer than longPressDuration
+    // trigger the long press
+    if( !triggered ) {
+      // Decrement the lastButtonPressed, since we incremented it at the top
+      sendMessage( "D" + String(lastButtonPressed-1) + ",long" );
+    }
+    triggered = TRUE;
+  }
+}
+
+void onButtonRelease() {
+  if( !lastButtonPressed ) { return; }
+
+  if( !triggered && currentPress - startPress < longPressDuration ) {
+    // Decrement the lastButtonPressed, since we incremented when it was cached
+    sendMessage( "D" + String(lastButtonPressed-1) + ",short" );
+  }
+
+  // Reset variables
+  digitalWrite(D7, LOW);
+  triggered = FALSE;
+  startPress = 0;
+  lastButtonPressed = 0;
+}
 
 void loop() {
-    // if the first button is pressed
-    if( isPressed(D0) ) {
-        sendMessage("D0");
-    } else if ( isPressed(D1) ) {
-        sendMessage("D1");
-    }
-
     if (!sentFirstMessage && client.connected()) {
-
         sendMessage( "Can you hear me?" );
         sentFirstMessage = TRUE;
     }
+
+    // if the first button is pressed
+    if( isPressed(D0) ) {
+        onButtonPress(D0);
+    } else if ( isPressed(D1) ) {
+        onButtonPress(D1);
+    } else {
+      onButtonRelease();
+    }
+
 }
